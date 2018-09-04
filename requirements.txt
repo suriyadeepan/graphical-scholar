@@ -1,3 +1,4 @@
 scholarly
 arxiv
 argparse
+tqdm
