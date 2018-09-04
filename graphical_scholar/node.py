@@ -9,8 +9,13 @@
 """
 class Node(object):
 
-    def __init__(self, citations=0):
+    def __init__(self, 
+            citations=0, 
+            is_root=False
+            ):
+        # attach parameters to instance
         self.citations = citations
+        self.is_root = is_root
 
 class Article(Node):
 
@@ -36,7 +41,7 @@ class Article(Node):
         self.keywords = keywords
         self.query_phrase = query_phrase
         self.is_influential = is_influential
-        self.authors = []
+        self.authors = authors 
 
 class Author(Node):
 
@@ -54,3 +59,4 @@ class Author(Node):
         self.s2_id = s2_id
         self.gscholar_id = s2_id
         self.keywords = keywords
+        self.articles = articles
