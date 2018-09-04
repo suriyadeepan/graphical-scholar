@@ -1,5 +1,6 @@
 S2_QUERY_TEMPLATE = 'https://api.semanticscholar.org/v1/paper/{}'
 S2_AUTHOR_URL_TEMPLATE = 'https://www.semanticscholar.org/author/{}'
+S2_ERR_PAPER_NOT_FOUND = 'Paper not found'
 
 import requests
 import json
@@ -11,6 +12,13 @@ def query(id):
     return json.loads(requests.get(S2_QUERY_TEMPLATE.format(id)).text)
 
 def query_and_resolve(id):
+    # Query by ID
+    s2_response = query(id)
+    # check for ERROR
+    if s2_response.get('error') == S2_ERR_PAPER_NOT_FOUND:
+        print(':: [api.s2] *The Paper with ID "{}" not found in Semantic Scholar'.format( id))
+        return None
+
     return resolve_s2_response(query(id))
 
 def resolve_s2_response(raw_s2_response):
