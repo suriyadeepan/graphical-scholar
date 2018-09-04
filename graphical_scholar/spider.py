@@ -45,53 +45,31 @@ bibnet : [ l1net, l2net, .. lmnet ]
 """
 
 # dev params
-TITLE = 'Structured Attention Networks'
+DEV_TITLE = 'Structured Attention Networks'
 
 S2_QUERY_TEMPLATE = 'https://api.semanticscholar.org/v1/paper/{}'
 ARXIV_ID_TEMPLATE = 'arXiv:{}'
 
-import requests
+import argparse
 import json
-import arxiv
+
+from api import s2, arxiv
+from node import Article
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--title", default=DEV_TITLE, help='Title of Article to search for')
+args = parser.parse_args()
 
 
-def query2arxiv_id(query):
-    arxiv_url =  arxiv.query(query)[0]['arxiv_url']
-    # clean up, format, return ID
-    return ARXIV_ID_TEMPLATE.format(arxiv_url.split('/')[-1].split('v')[0])
-
-def s2_lookup(id):
-    return requests.get(S2_QUERY_TEMPLATE.format(id)).text
-
-def parse_s2_response(s2_response):
-    # cast as JSON dict
-    response_dict = json.loads(s2_response)
-    # attributes to keep
-    primary_attrs = [ 'arxivId', 'paperId', 'title', 'year' ]
-    
-    root_dict = { k : response_dict[k] for k in primary_attrs }
-
-    root_dict['authors'] = [ { 'name' : a['name'], 'authorId' : a['authorId'] }
-            for a in response_dict['authors'] ]
-
-    root_dict['references'] = [ { attr : p[attr] for attr in primary_attrs } 
-            for p in response_dict['references'] ]
-
-    root_dict['citations'] = [ { attr : p[attr] for attr in primary_attrs } 
-            for p in response_dict['citations'] ]
-
-    root_dict['num_citations'] = len(root_dict['citations'])
-
-    return root_dict
-
-def save_bibnet(net):
-    with open('bibnet.json', 'w') as f:
+def cache_json(net, filename):
+    with open(filename, 'w') as f:
         json.dump(net, f)
 
 
 if __name__ == '__main__':
-
-    arxiv_id = query2arxiv_id(TITLE)
-    print('arXiv ID : ', arxiv_id)
-    root_dict = parse_s2_response(s2_lookup(arxiv_id))
-    save_bibnet(root_dict)
+    # create empty root node
+    root_node = Article()
+    # download information based on "seed"
+    root_node.download(seed=args.title)
+    # save to disk as JSON
+    print(root_node)
