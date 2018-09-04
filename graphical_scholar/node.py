@@ -63,6 +63,10 @@ class Article(Node):
         self.name = self.title # name as handle to save/load JSON
 
     def to_dict(self):
+
+        if self.self_as_dict:
+            return self.self_as_dict
+
         self_as_dict = {
                 'num_citations' : self.num_citations,
                 'arxiv_id' : self.arxiv_id,
@@ -94,14 +98,10 @@ class Article(Node):
 
         return self_as_dict
 
-    #def cache(self):
-    #    with open(os.path.join(BIN, self.name + '.json'), 'w') as f:
-    #        json.dump(self.self_as_dict, f)
-
     def __repr__(self):
         return str(self.self_as_dict)
 
-    def download(self, seed):
+    def download(self, seed=None, cache=False):
         # identify type of seed = [ title, arxiv_id, s2_id, arxiv_url, doi ]
         #  currently we assume the seed is of type title
         # 
@@ -111,13 +111,37 @@ class Article(Node):
         # if seed_type(seed) == 'title':
         #   ...
 
-        # fetch arxiv_id
-        self.arxiv_id = arxiv.title2arxiv_id_s2compat(seed)
-        # print(self.arxiv_id)
+        
+        # query by S2 ID if available
+        query_id = self.s2_id
+
+        if not self.s2_id:
+
+            if seed == None and self.title:
+                seed = self.title
+
+            print(':: [Node] Downloading "{}"'.format(seed))
+
+            # fetch arxiv_id
+            self.arxiv_id = arxiv.title2arxiv_id_s2compat(seed)
+
+            # check if it's available on arxiv
+            if not self.arxiv_id:
+                print(':: [Article] *Download Incomplete for seed "{}" !!'.format(seed))
+                return
+
+            query_id = self.arxiv_id
+
+        else:
+            print(':: [Node] Downloading "{}"'.format(self.title))
 
         # query semantic scholar
-        s2_response = s2.query_and_resolve(self.arxiv_id)
-        # print(s2_response)
+        s2_response = s2.query_and_resolve(query_id)
+
+        # check if it's available on arxiv
+        if not s2_response:
+            print(':: [Article] *Download Incomplete for arXiv ID "{}" !!'.format(self.arxiv_id))
+            return
 
         # resolve S2 response and update self
         self.extract_from_s2_response(s2_response)
@@ -129,7 +153,10 @@ class Article(Node):
         self.to_dict()
 
         # cache
-        self.cache()
+        if cache:
+            self.cache()
+
+        return self
 
     def extract_from_s2_response(self, s2_response):
         # semantic scholar unique ID if we don't have one
