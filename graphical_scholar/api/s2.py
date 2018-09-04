@@ -15,12 +15,15 @@ def query_and_resolve(id):
 
 def resolve_s2_response(raw_s2_response):
     # attributes to keep
-    primary_attrs = [ 'arxivId', 'paperId', 'title', 'year', 'isInfluential' ]
+    primary_attrs = [ 'arxivId', 'paperId', 'title', 'year', 'isInfluential', 'authors' ]
+
+    # add dummy "isInfluential" attribute
+    raw_s2_response['isInfluential'] = None
     
     refined_response = { k : raw_s2_response[k] for k in primary_attrs }
 
-    refined_response['authors'] = [ { 'name' : a['name'], 'authorId' : a['authorId'] }
-            for a in raw_s2_response['authors'] ]
+    #refined_response['authors'] = [ { 'name' : a['name'], 'authorId' : a['authorId'] }
+    #        for a in raw_s2_response['authors'] ]
 
     refined_response['references'] = [ { attr : p[attr] for attr in primary_attrs } 
             for p in raw_s2_response['references'] ]
