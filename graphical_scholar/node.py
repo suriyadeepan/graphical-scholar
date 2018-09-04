@@ -18,12 +18,8 @@ from api import arxiv, s2
 
 class Node(object):
 
-    def __init__(self, 
-            citations=0, 
-            is_root=False
-            ):
+    def __init__(self, is_root=False):
         # attach parameters to instance
-        self.citations = citations
         self.is_root = is_root
         self.self_as_dict = None
         self.name = None
@@ -48,6 +44,10 @@ class Article(Node):
             keywords= None,
             query_phrase= None
             ):
+
+        # invoke parent's constructor
+        super(Article, self).__init__()
+
         # attach parameters to instance
         self.citations = citations
         self.references = references
@@ -61,7 +61,6 @@ class Article(Node):
         self.keywords = keywords
         self.query_phrase = query_phrase
         self.name = self.title # name as handle to save/load JSON
-        self.self_as_dict = None
 
     def to_dict(self):
         self_as_dict = {
@@ -75,26 +74,29 @@ class Article(Node):
                 'query_phrase' : self.query_phrase,
                 'is_influential' : self.is_influential,
                 'citations' : [],
-                'references' : []
+                'references' : [],
+                'authors' : []
                 }
 
         if len(self.citations) > 0:
             self_as_dict['citations'] = [ c.to_dict() for c in self.citations ]
-                        
 
         if len(self.references) > 0:
             self_as_dict['references'] = [ r.to_dict() for r in self.references ]
 
+        if len(self.authors) > 0:
+            self_as_dict['authors'] = [ a.to_dict() for a in self.authors ]
+
         # attach to instance
         self.self_as_dict = self_as_dict
 
-        print(self.self_as_dict)
+        # print(self.self_as_dict)
 
         return self_as_dict
 
-    def cache(self):
-        with open(os.path.join(BIN, self.name + '.json'), 'w') as f:
-            json.dump(self.self_as_dict, f)
+    #def cache(self):
+    #    with open(os.path.join(BIN, self.name + '.json'), 'w') as f:
+    #        json.dump(self.self_as_dict, f)
 
     def __repr__(self):
         return str(self.self_as_dict)
@@ -111,11 +113,11 @@ class Article(Node):
 
         # fetch arxiv_id
         self.arxiv_id = arxiv.title2arxiv_id_s2compat(seed)
-        print(self.arxiv_id)
+        # print(self.arxiv_id)
 
         # query semantic scholar
         s2_response = s2.query_and_resolve(self.arxiv_id)
-        print(s2_response)
+        # print(s2_response)
 
         # resolve S2 response and update self
         self.extract_from_s2_response(s2_response)
@@ -128,7 +130,6 @@ class Article(Node):
 
         # cache
         self.cache()
-
 
     def extract_from_s2_response(self, s2_response):
         # semantic scholar unique ID if we don't have one
@@ -194,15 +195,18 @@ class Author(Node):
             keywords= None,
             articles= []
             ):
+
+        # invoke parent's constructor
+        super(Author, self).__init__()
+
         # attach parameters to instance
         self.num_citations = num_citations
         self.arxiv_id = arxiv_id
         self.name = name
         self.s2_id = s2_id
-        self.gscholar_id = s2_id
+        self.gscholar_id = gscholar_id
         self.keywords = keywords
         self.articles = articles
-        self.self_as_dict = None
 
     def to_dict(self):
         self_as_dict = {
@@ -215,8 +219,8 @@ class Author(Node):
                 'articles' : []
                 }
 
-        if len(self.references) > 0:
-            self_as_dict['references'] = [ r.to_dict() for r in self.references ]
+        if len(self.articles) > 0: # TODO : this will always fail; Resolve!
+            self_as_dict['articles'] = [ p.to_dict() for p in self.articles ]
 
         # attach to instance
         self.self_as_dict = self_as_dict
