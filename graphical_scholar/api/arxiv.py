@@ -4,7 +4,7 @@ import arxiv
 
 
 def title2arxiv_id_s2compat(title_phrase):
-    arxiv_url =  query2arxiv_url(title_phrase)
+    arxiv_url =  title2arxiv_url(title_phrase)
     # clean up, format, return ID
     return ARXIV_ID_TEMPLATE.format(arxiv_url.split('/')[-1].split('v')[0])
 
